@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seguimiento RRII - UNLa</title>
+    <style>
+        :root {
+            --unla-red: #7a1b22;
+            --unla-dark: #4a1014;
+            --bg-color: #f4f4f9;
+            --text-color: #333;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: var(--unla-red);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        header h1 {
+            margin: 0 0 15px 0;
+            font-size: 1.8rem;
+        }
+        .student-info {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .student-info input {
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            width: 250px;
+            max-width: 100%;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 30px auto;
+            padding: 0 15px;
+        }
+        .table-wrapper {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+        th, td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: var(--unla-dark);
+            color: white;
+            font-weight: 600;
+        }
+        tr:hover {
+            background-color: #f9f9f9;
+        }
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        input[type="number"] {
+            width: 60px;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        input[type="number"]:disabled {
+            background-color: #e9ecef;
+            cursor: not-allowed;
+        }
+        .locked-text {
+            font-size: 0.8rem;
+            color: #d9534f;
+            display: block;
+            margin-top: 4px;
+        }
+        .year-divider {
+            background-color: #e2e2e2;
+            font-weight: bold;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Licenciatura en Relaciones Internacionales - UNLa</h1>
+        <div class="student-info">
+            <input type="text" id="studentName" placeholder="Ej. Mateo Rullo">
+            <input type="number" id="cohortYear" placeholder="Año de Cohorte (Ej. 2023)">
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="table-wrapper">
+            <table id="subjectsTable">
+                <thead>
+                    <tr>
+                        <th>Cód.</th>
+                        <th>Unidad Curricular</th>
+                        <th>Cursada</th>
+                        <th>Nota Cursada</th>
+                        <th>Final</th>
+                        <th>Nota Final</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Base de datos del programa de estudios extraída del PDF
+        const materias = [
+            // PRIMER AÑO
+            { id: "01", nombre: "Historia Moderna y Contemporánea I", corr: [], year: 1 },
+            { id: "02", nombre: "Historia Argentina I", corr: [], year: 1 },
+            { id: "03", nombre: "Lógica y Epistemología de las Ciencias Sociales", corr: [], year: 1 },
+            { id: "04", nombre: "Introducción a las Relaciones Internacionales", corr: [], year: 1 },
+            { id: "05", nombre: "Pensamiento Filosófico", corr: [], year: 1 },
+            { id: "06", nombre: "Inglés I", corr: [], year: 1 },
+            { id: "07", nombre: "Historia Moderna y Contemporánea II", corr: ["01"], year: 1 },
+            { id: "08", nombre: "Historia Argentina II", corr: ["02"], year: 1 },
+            { id: "09", nombre: "Metodología de la Investigación en Ciencias Sociales", corr: ["03"], year: 1 },
+            { id: "10", nombre: "Filosofía Moderna y Contemporánea", corr: ["05"], year: 1 },
+            { id: "11", nombre: "Economía Política I", corr: ["01", "03"], year: 1 },
+            { id: "12", nombre: "Inglés II", corr: ["06"], year: 1 },
+            
+            // SEGUNDO AÑO
+            { id: "13", nombre: "Historia de las Relaciones Internacionales", corr: ["04"], year: 2 },
+            { id: "14", nombre: "Economía Política II", corr: ["11"], year: 2 },
+            { id: "15", nombre: "Sistemática de la Ciencia Política", corr: ["10"], year: 2 },
+            { id: "16", nombre: "Métodos y Técnicas de Investigación Aplicados", corr: ["09"], year: 2 },
+            { id: "17", nombre: "Pensamiento Clásicos de las Relaciones Internacionales", corr: ["10"], year: 2 },
+            { id: "18", nombre: "Inglés III", corr: ["12"], year: 2 },
+            { id: "19", nombre: "Teoría de las Relaciones Internacionales I", corr: ["04", "07"], year: 2 },
+            { id: "20", nombre: "Teoría Política I", corr: ["15"], year: 2 },
+            { id: "21", nombre: "Economía Política Internacional I", corr: ["14"], year: 2 },
+            { id: "22", nombre: "Política Internacional Contemporánea", corr: ["04", "07"], year: 2 },
+            { id: "23", nombre: "Diseño y Formulación de Modelos Prospectivos...", corr: ["09", "16"], year: 2 },
+            { id: "24", nombre: "Portugués I", corr: [], year: 2 },
+
+            // TERCER AÑO
+            { id: "25", nombre: "Economía Política Internacional II", corr: ["21"], year: 3 },
+            { id: "26", nombre: "Teoría de las Relaciones Internacionales II", corr: ["19"], year: 3 },
+            { id: "27", nombre: "Sistemas Políticos Comparados", corr: ["15", "20"], year: 3 },
+            { id: "28", nombre: "Política Exterior Argentina I", corr: ["08", "22"], year: 3 },
+            { id: "29", nombre: "Historia de las Relaciones Internacionales Latinoamericanas", corr: ["22"], year: 3 },
+            { id: "30", nombre: "Portugués II", corr: ["24"], year: 3 },
+            { id: "31", nombre: "Derecho e Instituciones Internacionales", corr: ["22"], year: 3 },
+            { id: "32", nombre: "Agenda Internacional", corr: ["22", "26"], year: 3 },
+            { id: "33", nombre: "Teoría Política II", corr: ["15", "20"], year: 3 },
+            { id: "34", nombre: "Seminario de Justicia y Derechos Humanos", corr: [], year: 3 },
+            { id: "35", nombre: "Política Exterior Argentina II", corr: ["28"], year: 3 },
+            { id: "36", nombre: "Módulo de Informática 11 (Estadística I)", corr: ["16"], year: 3 },
+            { id: "37", nombre: "Seminario de Pensamiento Nacional y Latinoamericano", corr: ["08"], year: 3 },
+
+            // CUARTO AÑO
+            { id: "38", nombre: "Módulo de Informática 12 (Estadística II)", corr: ["16"], year: 4 },
+            { id: "39", nombre: "Procesos de Integración Americanos", corr: ["25", "29"], year: 4 },
+            { id: "40", nombre: "Taller de Trabajo Final Integrador 1", corr: ["23", "26", "29"], year: 4 },
+            { id: "41", nombre: "Sistemas Políticos Latinoamericanos Comparados", corr: ["27", "29"], year: 4 },
+            { id: "42", nombre: "Prospectiva Estratégica", corr: ["23"], year: 4 },
+            { id: "43", nombre: "Política Doméstica y Externa Brasileña", corr: ["29"], year: 4 },
+            { id: "44", nombre: "Taller de Trabajo Final Integrador 11", corr: ["40"], year: 4 },
+            { id: "45", nombre: "Políticas Exteriores Latinoamericanas Comparadas", corr: ["29"], year: 4 },
+            { id: "46", nombre: "Seminario Optativo I", corr: ["35"], year: 4 },
+            { id: "47", nombre: "Seminario Optativo II", corr: ["35"], year: 4 },
+            { id: "48", nombre: "Seminario Optativo III", corr: ["35"], year: 4 },
+            { id: "49", nombre: "Seminario Optativo IV", corr: ["35"], year: 4 },
+            { id: "50", nombre: "Seminario Atlántico Sur, Malvinas y Antártida", corr: ["35"], year: 4 },
+            { id: "51", nombre: "Taller de Prácticas Pre-profesionales", corr: [], year: 4 }
+        ];
+
+        // Estado del alumno
+        let estado = {};
+        materias.forEach(m => {
+            estado[m.id] = { cursada: false, final: false, notaCursada: "", notaFinal: "" };
+        });
+
+        const tbody = document.querySelector("#subjectsTable tbody");
+
+        function getMateria(id) {
+            return materias.find(m => m.id === id);
+        }
+
+        function checkCursadaRequirements(materiaId) {
+            const materia = getMateria(materiaId);
+            let missing = [];
+            materia.corr.forEach(reqId => {
+                if (!estado[reqId].cursada) missing.push(reqId);
+            });
+            return missing;
+        }
+
+        function checkFinalRequirements(materiaId) {
+            const materia = getMateria(materiaId);
+            let missing = [];
+            
+            // Requisito 1: Tener la cursada de la materia actual
+            if (!estado[materiaId].cursada) {
+                missing.push("cursada propia");
+            }
+            
+            // Requisito 2: Tener los finales de las correlativas
+            materia.corr.forEach(reqId => {
+                if (!estado[reqId].final) missing.push(`final de ${reqId}`);
+            });
+            return missing;
+        }
+
+        function handleCheckboxClick(e, type, id) {
+            const isChecked = e.target.checked;
+            
+            if (isChecked) {
+                if (type === 'cursada') {
+                    const missing = checkCursadaRequirements(id);
+                    if (missing.length > 0) {
+                        e.preventDefault();
+                        alert(`No podés cursar esta materia. Te falta la cursada de las correlativas: ${missing.join(", ")}`);
+                        return;
+                    }
+                } else if (type === 'final') {
+                    const missing = checkFinalRequirements(id);
+                    if (missing.length > 0) {
+                        e.preventDefault();
+                        alert(`No podés dar el final de esta materia. Te falta: ${missing.join(", ")}`);
+                        return;
+                    }
+                }
+            } else {
+                // Si desmarco una cursada, tengo que desmarcar su final
+                if (type === 'cursada') {
+                    estado[id].final = false;
+                    document.getElementById(`final-${id}`).checked = false;
+                    document.getElementById(`nota-final-${id}`).disabled = true;
+                }
+            }
+
+            // Actualizar estado y UI
+            estado[id][type] = isChecked;
+            const inputNota = document.getElementById(type === 'cursada' ? `nota-cursada-${id}` : `nota-final-${id}`);
+            inputNota.disabled = !isChecked;
+            if (!isChecked) inputNota.value = "";
+        }
+
+        function renderTable() {
+            let currentYear = 0;
+
+            materias.forEach(materia => {
+                if (materia.year !== currentYear) {
+                    currentYear = materia.year;
+                    const yearRow = document.createElement("tr");
+                    yearRow.innerHTML = `<td colspan="6" class="year-divider">AÑO ${currentYear}</td>`;
+                    tbody.appendChild(yearRow);
+                }
+
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td>${materia.id}</td>
+                    <td>
+                        ${materia.nombre}
+                        ${materia.corr.length > 0 ? `<span class="locked-text">Correlativas: ${materia.corr.join(" - ")}</span>` : ""}
+                    </td>
+                    <td>
+                        <input type="checkbox" id="cursada-${materia.id}">
+                    </td>
+                    <td>
+                        <input type="number" id="nota-cursada-${materia.id}" min="1" max="10" disabled placeholder="Nota">
+                    </td>
+                    <td>
+                        <input type="checkbox" id="final-${materia.id}">
+                    </td>
+                    <td>
+                        <input type="number" id="nota-final-${materia.id}" min="1" max="10" disabled placeholder="Nota">
+                    </td>
+                `;
+                tbody.appendChild(tr);
+
+                // Agregar Event Listeners
+                document.getElementById(`cursada-${materia.id}`).addEventListener('click', (e) => handleCheckboxClick(e, 'cursada', materia.id));
+                document.getElementById(`final-${materia.id}`).addEventListener('click', (e) => handleCheckboxClick(e, 'final', materia.id));
+            });
+        }
+
+        // Inicializar la tabla al cargar la página
+        renderTable();
+    </script>
+</body>
+</html>
